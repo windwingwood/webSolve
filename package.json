@@ -1,0 +1,23 @@
+{
+  "name": "websolve",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/windwingwood/webSolve.git"
+  },
+  "author": "kaztha",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/windwingwood/webSolve/issues"
+  },
+  "homepage": "https://github.com/windwingwood/webSolve#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "request": "^2.88.2"
+  }
+}
