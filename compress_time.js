@@ -14,6 +14,7 @@
 
 const fs = require('fs');
 const readline = require('readline');
+const { group } = require('console');
 
 function fileWrite(dataString) {
     fs.writeFile(__dirname+'/CTModel',dataString,'utf8',(err)=>{
@@ -87,81 +88,150 @@ function check(group1, group2) {
     return 0;
 }
 
-function createModel(lowGroup) {
-    const redGroup = {};
-    for (let i=0;i<lowGroup.length;i++) {
-        redGroup[lowGroup[i]] = 4;
-    }
-    for (let i=1;i<=33;i++) {
-        if (redGroup[i]) {
-
-        } else {
-            redGroup[i] = 5;
+function checkNoBlue(group1, group2) {
+    let redHint = 0;
+    for(let i=0;i<6;i++) {
+        const ball1 = group1[i];
+        for(j=0;j<6;j++) {
+            const ball2 = group2[j];
+            if (ball1 == ball2) {
+                redHint++;
+                break;
+            }
         }
     }
+    if (redHint == 6) {
+        return '一等奖';
+    } else if (redHint == 5) {
+        return '三等奖';
+    } else if (redHint == 4) {
+        return '四等奖';
+    } else if (redHint == 3) {
+        return '五等奖';
+    } else {
+        return '六等奖';
+    }
+    return '没中奖';
+}
+
+// 计 11*14 = 154
+function createModel() {
     
     const oooo = [];
 
-    for (let i=0; i<156; i++) {
-        const currentGroup = [];
-        for (let k=0;k<6;k++) {
-            let num;
-            while(1){
-                num = getRandom();
-                if (redGroup[num]) {
-                    let repeat = false;
-                    for (let j=0;j<currentGroup.length;j++) {
-                        if (currentGroup[j]==num) {
-                            repeat = true;
-                            break;
-                        }
-                    }
-                    if (!repeat) {
-                        currentGroup.push(num);
-                        redGroup[num] = redGroup[num]-1;
-                        break;
-                    }
-                }
+    let k=0;
+    while(k<14) {
+        const elm = newSixGroup();//len = 11
+        if (!isContainArray(oooo, elm)) {
+            for (let i=0; i<elm.length; i++) {
+                oooo.push(elm[i]);
             }
+            k++;
         }
-        currentGroup.sort((a,b)=>{return a-b;});
-        // console.log(currentGroup);
-        oooo.push(currentGroup);
     }
+    console.log('完成  共'+oooo.length+'*16条  计 '+oooo.length*16*2+' 元');
+    // console.log(oooo);
 
-    console.log(oooo.length);
+    fileWrite(JSON.stringify(oooo));
 }
 
 function getRandom() {
     return parseInt(Math.random()*33+1);
 }
 
-// readCommand('请输入任意字符：').then((res) => {
-//     console.log(res);
-// });
+// 1次11条结果
+// 加上蓝码共 11*16=176 计 352元
+// 5000/352 = 14 次 (4928)
 
-// fileRead();
+function newSixGroup() {
+    const result = [];
 
-const argv = process.argv.slice(2);
+    let root = newRedGroup();
 
-if (argv[0] == '-create') {
-    readCommand('请输入9个不重复数字作为低频率球，用空格隔开：').then((res)=>{
-        const result = res.split(' ');
-        const xx = [];
-        for(let i=0;i<9;i++) {
-            const num = parseInt(result[i]);
-            if (num <= 0 || num > 33 || isNaN(num)) {
-                console.log('输入第'+i+'个数字错误');
-                return;
+    let group = [];
+    for (let i=0;i<5;i++) {
+        do {
+            let xx;
+            while(1) {
+                xx = parseInt(Math.random()*root.length)
+                if (xx >= root.length) continue;
+                if (!isContain(group, root[xx])) {
+                    break;
+                }
             }
-            xx.push(num);
+            group.push(root[xx]);
+            root.splice(xx, 1);
+        } while (group.length < 6)
+        group.sort((a,b)=>{return a-b});
+        result.push(group);
+        group = [];
+    }
+    if (root.length != 3) console.log('算法发生错误');
+    group = [];
+    for (let i=0;i<root.length;i++) {
+        group.push(root[i]);
+    }
+    root = newRedGroup();
+    for (let i=0;root.length>0;i++) {
+        do {
+            let xx;
+            while(1) {
+                xx = parseInt(Math.random()*root.length)
+                if (xx >= root.length) continue;
+                if (!isContain(group, root[xx])) {
+                    break;
+                }
+            }
+            group.push(root[xx]);
+            root.splice(xx, 1);
+        } while (group.length < 6)
+        group.sort((a,b)=>{return a-b});
+        result.push(group);
+        group = [];
+    }
+    // console.log('处理完成');
+    // console.log(result);
+    return result;
+}
+
+function newRedGroup() {
+    const redG = [];
+    for (let i=1;i<=33;i++) {
+        redG.push(i);
+    }
+    return redG;
+}
+
+function isContain(arr, num) {
+    for (let i=0; i<arr.length; i++) {
+        if (arr[i]==num) return true;
+    }
+    return false;
+}
+
+function isContainArray(arr1, arr2) {
+    for (let i=0; i<arr1.length; i++) {
+        for (let j=0; j<arr2.length; j++) {
+            if(isSame(arr1[i], arr2[j])) {
+                return true;
+            }
         }
-        if (xx.length != 9) {
-            console.log('输入数量错误');
+    }
+    return false;
+}
+
+function isSame(group1, group2) {
+    let sameCount = 0;
+    for (let i=0; i<group1.length; i++) {
+        if (group1[i] == group2[i]) {
+            sameCount++;
         }
-        createModel(xx);
-    });
-} else if (argv[0] == '-buy') {
+    }
+    if (sameCount==group1.length) return true;
+    else return false;
+}
+
+function buyCommand() {
     readCommand('请输入本期结果，用空格隔开：').then((res)=>{
         const result = res.split(' ');
         const xx = [];
@@ -173,24 +243,60 @@ if (argv[0] == '-create') {
             const reward = {};
             for (let i=0; i<obj.length; i++) {
                 const ggg = obj[i];
-                const ccc = check(ggg, xx);
+                const ccc = checkNoBlue(ggg, xx);
                 reward[ccc] = (reward[ccc])?(reward[ccc]+1):1;
             }
             console.log(reward);
+            allMoney(reward, obj.length*16*2);
         });
     });
-} else if ('-test') {
-    const xx = [1,2,3,4,5,6,7];
-    console.log('输入结果为: '+JSON.stringify(xx));
-    fileRead((obj)=>{
-        const reward = {};
-        for (let i=0; i<obj.length; i++) {
-            const ggg = obj[i];
-            const ccc = check(ggg, xx);
-            reward[ccc] = (reward[ccc])?(reward[ccc]+1):1;
-        }
-        console.log(reward);
-    });
+}
+
+function allMoney(reward, rich) {
+    let moeny = 0;
+    if (reward['一等奖']) {
+        console.log('一等奖' + reward['一等奖'] + ' 个');
+    }
+    if (reward['三等奖']) {
+        console.log('三等奖' + reward['三等奖'] + ' 个  计 ' + reward['三等奖']*3000 + ' 元');
+        moeny += reward['三等奖']*3000;
+    }
+    if (reward['四等奖']) {
+        console.log('四等奖' + reward['四等奖'] + ' 个  计 ' + reward['四等奖']*200 + ' 元');
+        moeny += reward['四等奖']*200
+    }
+    if (reward['五等奖']) {
+        console.log('五等奖' + reward['五等奖'] + ' 个  计 ' + reward['五等奖']*10 + ' 元');
+        moeny += reward['五等奖']*10
+    }
+    if (reward['六等奖']) {
+        console.log('六等奖' + reward['六等奖'] + ' 个  计 ' + reward['六等奖']*5 + ' 元');
+        moeny += reward['六等奖']*5
+    }
+    console.log('小奖合计 '+moeny+'元');
+    console.log('花了 '+rich+' 元');
+    console.log('收益为 '+ (moeny-rich) + ' 元');
+}
+
+function test(){
+    let test = isSame([1,2,3,4,5,6], [1,2,3,4,5,7]);
+    console.log(test);
+}
+
+// readCommand('请输入任意字符：').then((res) => {
+//     console.log(res);
+// });
+
+// fileRead();
+
+const argv = process.argv.slice(2);
+
+if (argv[0] == '-create') {
+    createModel();
+} else if (argv[0] == '-buy') {
+    buyCommand();
+} else if (argv[0] == '-test') {
+    test();
 } else {
     console.log('命令参数：');
     console.log('-create 创建自己的模型库');
